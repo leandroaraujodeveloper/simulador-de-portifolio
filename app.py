@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output
 from financial import getReturns, getEfficientFrontier
 import dash_bootstrap_components as dbc
 
-app = Dash(external_stylesheets=[dbc.themes.COSMO])
+app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 
 server = app.server
 
