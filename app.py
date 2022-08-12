@@ -17,7 +17,7 @@ server = app.server
 
 # assume you have a "long-form" data frame
 # see https://plotly.com/python/px-arguments/ for more options
-
+app.title = 'Simulador de Ativos'
 controls = dbc.Card(
     [
     dbc.CardHeader("Parâmetros para as Simulações de Portifólio"),
@@ -44,7 +44,7 @@ controls = dbc.Card(
     ]),
     ], body=True, color="primary", outline=True)
 
-app.layout =dbc.Container(children=[
+app.layout = dbc.Container(children=[
     html.H1(children='Simulador de rendimento de ativos de portifólio'),
 
     html.H2(children='''
