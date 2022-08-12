@@ -4,7 +4,7 @@ import pandas as pd
 
 N_PORTFOLIOS = 10 # done
 N_DAYS = 252 # todo
-RISKY_ASSETS = ['FB', 'TSLA', 'TWTR', 'MSFT'] # todo
+RISKY_ASSETS = ['META', 'TSLA', 'TWTR', 'MSFT'] # todo
 RISKY_ASSETS.sort()
 START_DATE = '2018-01-01' # done
 END_DATE = '2018-12-31' # done
