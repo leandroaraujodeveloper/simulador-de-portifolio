@@ -16,8 +16,6 @@ def getReturns(startDate=START_DATE, endDate=END_DATE):
                             end=endDate, adjusted=True)
     print(f'Downloaded {prices_df.shape[0]} rows of data.')
 
-    prices_df['Adj Close'].plot(title='Stock prices of the considered assets');
-
     returns_df = prices_df['Adj Close'].pct_change().dropna()
     return returns_df
     
