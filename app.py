@@ -23,9 +23,16 @@ controls = dbc.Card(
     dbc.CardHeader("Parâmetros para as Simulações de Portifólio"),
     dbc.CardBody(
         [
+    dbc.Label("Selecione as ações:"),
+    dcc.Dropdown(
+        ['META', 'TSLA', 'TWTR', 'MSFT', 'AAPL', 'LMT'],
+        ['META', 'TSLA'],
+        multi=True,
+        id="tickers"
+    ),
     dbc.Label("Selecione o intervalo do histórico das ações:"),
     html.Div([
-        
+
         dcc.DatePickerRange(
         id='my-date-picker-range',
         min_date_allowed=date(1995, 8, 5),
@@ -62,9 +69,10 @@ app.layout = dbc.Container(children=[
 ], )
 @app.callback(
     Output('example-graph', 'figure'),
+    Input('tickers', 'value'),
     Input('my-date-picker-range', 'start_date'),
     Input('my-date-picker-range', 'end_date'))
-def update_graph(start_date, end_date):
+def update_graph(tickers, start_date, end_date):
     start, end = '2018-01-01', '2018-12-31'
     if start_date is not None:
         start_date_object = date.fromisoformat(start_date)
@@ -74,16 +82,17 @@ def update_graph(start_date, end_date):
         end_date_object = date.fromisoformat(end_date)
         end_date_string = end_date_object.strftime('%Y-%m-%d')
         end = end_date_string
-    returns = getReturns(start, end)
+    returns = getReturns(tickers, start, end)
     fig = px.line(returns)
     return fig
 
 @app.callback(
     Output('scatter-graph', 'figure'),
+    Input('tickers', 'value'),
     Input('my-date-picker-range', 'start_date'),
     Input('my-date-picker-range', 'end_date'),
     Input("input_range_2", "value"))
-def update_scatter(start_date, end_date, n_portfolios):
+def update_scatter(tickers, start_date, end_date, n_portfolios):
     start, end = '', ''
     if start_date is not None:
         start_date_object = date.fromisoformat(start_date)
@@ -93,13 +102,14 @@ def update_scatter(start_date, end_date, n_portfolios):
         end_date_object = date.fromisoformat(end_date)
         end_date_string = end_date_object.strftime('%Y-%m-%d')
         end = end_date_string
-    retornos = getReturns(start, end)
-    ef = getEfficientFrontier(retornos, n_portfolios)
-    fig = px.scatter_3d(ef, x='volatilidade', y='retornos', z='indice_de_sharpe', 
+    retornos = getReturns(tickers, start, end)
+    ef, std, mean = getEfficientFrontier(tickers, retornos, n_portfolios)
+    fig = px.scatter_3d(ef, x='volatilidade', y='retornos', z='indice_de_sharpe',
         color='volatilidade',  # set color to an array/list of desired values
         color_continuous_scale='Viridis',   # choose a colorscale
         opacity=0.8
     )
+
     return fig
 
 if __name__ == '__main__':
