@@ -2,12 +2,12 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 
-N_PORTFOLIOS = 100 # done
-N_DAYS = 252 # todo
-RISKY_ASSETS = ['META', 'TSLA', 'TWTR', 'MSFT'] # done
+N_PORTFOLIOS = 100
+N_DAYS = 252
+RISKY_ASSETS = ['META', 'TSLA', 'TWTR', 'MSFT']
 RISKY_ASSETS.sort()
-START_DATE = '2018-01-01' # done
-END_DATE = '2018-12-31' # done
+START_DATE = '2018-01-01'
+END_DATE = '2018-12-31'
 
 def getReturns(tickers=RISKY_ASSETS,startDate=START_DATE, endDate=END_DATE):
     print(tickers)
@@ -54,4 +54,11 @@ def getEfficientFrontier(tickers, returns_df, n_portfolios=N_PORTFOLIOS):
         portf_vol_ef.append(np.min(portf_vol[matched_ind]))
 
     portf_rtns_ef = np.delete(portf_rtns_ef, indices_to_skip)
-    return portf_results_df, portf_rtns_ef, portf_rtns
+
+    max_sharpe_ind = np.argmax(portf_results_df.indice_de_sharpe)
+    max_sharpe_portf = portf_results_df.loc[max_sharpe_ind]
+
+    min_vol_ind = np.argmin(portf_results_df.volatilidade)
+    min_vol_portf = portf_results_df.loc[min_vol_ind]
+
+    return portf_results_df, portf_rtns_ef, portf_rtns, max_sharpe_portf, min_vol_portf, weights

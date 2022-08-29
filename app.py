@@ -2,6 +2,7 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 
 from dash import Dash, html, dcc
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -60,11 +61,18 @@ app.layout = dbc.Container(children=[
     html.Hr(),
         dbc.Row(
             [
-                dbc.Col(controls, md=4),
-                dbc.Col([dcc.Graph(id='example-graph'), dcc.Graph(id="scatter-graph"),], md=8),
+                dbc.Col([controls,
+                        html.H3("Carteira com as menores porcentagens"),
+                        dbc.Table(id="mytable"),
+                        dbc.Table(id="mytable-assets"),
+                        html.H3("Carteira com as maiores porcentagens"),
+                        dbc.Table(id="mytable-max"),
+                        dbc.Table(id="mytable-assets-max")], md=4),
+                dbc.Col([dcc.Graph(id='example-graph'), dcc.Graph(id="scatter-graph")], md=8),
             ],
             align="top",
         ),
+    html.Div(id='portfolio')
 
 ], )
 @app.callback(
@@ -103,14 +111,132 @@ def update_scatter(tickers, start_date, end_date, n_portfolios):
         end_date_string = end_date_object.strftime('%Y-%m-%d')
         end = end_date_string
     retornos = getReturns(tickers, start, end)
-    ef, std, mean = getEfficientFrontier(tickers, retornos, n_portfolios)
-    fig = px.scatter_3d(ef, x='volatilidade', y='retornos', z='indice_de_sharpe',
-        color='volatilidade',  # set color to an array/list of desired values
-        color_continuous_scale='Viridis',   # choose a colorscale
+    ef, std, mean, max, min, weights = getEfficientFrontier(tickers, retornos, n_portfolios)
+
+
+    fig = px.scatter_matrix(ef,
+        color='volatilidade',
+        color_continuous_scale='Viridis',
         opacity=0.8
     )
 
     return fig
+
+@app.callback(
+    Output('mytable', 'children'),
+    Input('tickers', 'value'),
+    Input('my-date-picker-range', 'start_date'),
+    Input('my-date-picker-range', 'end_date'),
+    Input("input_range_2", "value"))
+def update_table(tickers, start_date, end_date, n_portfolios):
+    start, end = '', ''
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%Y-%m-%d')
+        start = start_date_string
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%Y-%m-%d')
+        end = end_date_string
+    retornos = getReturns(tickers, start, end)
+    ef, std, mean, max, min, weights = getEfficientFrontier(tickers, retornos, n_portfolios)
+    retornos = f"{100 * min['retornos']:.2f}%"
+    volatilidade = f"{100 * min['volatilidade']:.2f}%"
+    indice_de_sharpe = f"{100 * min['indice_de_sharpe']:.2f}%"
+
+    table_header = [
+    html.Thead(html.Tr([html.Th("Retornos"), html.Th("Volatilidade"), html.Th("Indice de Sharpe")]))
+    ]
+    return table_header + [html.Tbody([html.Tr([html.Td([retornos]), html.Td([volatilidade]), html.Td([indice_de_sharpe])])])]
+
+@app.callback(
+    Output('mytable-assets', 'children'),
+    Input('tickers', 'value'),
+    Input('my-date-picker-range', 'start_date'),
+    Input('my-date-picker-range', 'end_date'),
+    Input("input_range_2", "value"))
+def update_table_assets(tickers, start_date, end_date, n_portfolios):
+    start, end = '', ''
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%Y-%m-%d')
+        start = start_date_string
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%Y-%m-%d')
+        end = end_date_string
+    retornos = getReturns(tickers, start, end)
+    df, std, mean, max, min, weights = getEfficientFrontier(tickers, retornos, n_portfolios)
+
+    header_content = []
+    td_content = []
+    for x, y in zip(tickers, weights[np.argmin(df.volatilidade)]):
+        header_content.append(html.Th(x))
+        td_content.append(html.Td([f'{100*y:.2f}%']))
+
+    table_header = [
+    html.Thead(html.Tr(header_content))
+    ]
+    return table_header + [html.Tbody([html.Tr(td_content)])]
+
+@app.callback(
+    Output('mytable-assets-max', 'children'),
+    Input('tickers', 'value'),
+    Input('my-date-picker-range', 'start_date'),
+    Input('my-date-picker-range', 'end_date'),
+    Input("input_range_2", "value"))
+def update_table_assets_max(tickers, start_date, end_date, n_portfolios):
+    start, end = '', ''
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%Y-%m-%d')
+        start = start_date_string
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%Y-%m-%d')
+        end = end_date_string
+    retornos = getReturns(tickers, start, end)
+    df, std, mean, max, min, weights = getEfficientFrontier(tickers, retornos, n_portfolios)
+
+    header_content = []
+    td_content = []
+    for x, y in zip(tickers, weights[np.argmax(df.volatilidade)]):
+        header_content.append(html.Th(x))
+        td_content.append(html.Td([f'{100*y:.2f}%']))
+        # print(f'{100*y:.2f}%', end="", flush=True)
+    # , volatilidade, indice_de_sharpe
+    table_header = [
+    html.Thead(html.Tr(header_content))
+    ]
+    return table_header + [html.Tbody([html.Tr(td_content)])]
+
+
+@app.callback(
+    Output('mytable-max', 'children'),
+    Input('tickers', 'value'),
+    Input('my-date-picker-range', 'start_date'),
+    Input('my-date-picker-range', 'end_date'),
+    Input("input_range_2", "value"))
+def update_table_max(tickers, start_date, end_date, n_portfolios):
+    start, end = '', ''
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%Y-%m-%d')
+        start = start_date_string
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%Y-%m-%d')
+        end = end_date_string
+    retornos = getReturns(tickers, start, end)
+    ef, std, mean, max, min, weights = getEfficientFrontier(tickers, retornos, n_portfolios)
+    retorno = f"{100 * max['retornos']:.2f}%"
+    volatilidade = f"{100 * max['volatilidade']:.2f}%"
+    indice_de_sharpe = f"{100 * max['indice_de_sharpe']:.2f}%"
+
+    table_header = [
+    html.Thead(html.Tr([html.Th("Retornos"), html.Th("Volatilidade"), html.Th("Indice de Sharpe")]))
+    ]
+    return table_header + [html.Tbody([html.Tr([html.Td([retorno]), html.Td([volatilidade]), html.Td([indice_de_sharpe])])])]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
